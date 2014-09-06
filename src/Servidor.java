@@ -18,33 +18,41 @@ class Servidor {
 
 			Socket connectionSocket = welcomeSocket.accept();
 			threads[contador] = new Comunicacao(connectionSocket);
-			threads[contador].start();
+			threads[contador++].start();
 		}
 	}
 }
 
 class Comunicacao extends Thread {
 	Socket connectionSocket;
-	
-	public Comunicacao(Socket c){
+
+	public Comunicacao(Socket c) {
 		connectionSocket = c;
 	}
+
 	public void run() {
 
 		String clientSentence;
 		String capitalizedSentence;
 		BufferedReader inFromClient;
 		try {
-			inFromClient = new BufferedReader(new InputStreamReader(
-					connectionSocket.getInputStream()));
-			DataOutputStream outToClient = new DataOutputStream(
-					connectionSocket.getOutputStream());
+			while (true) {
+				inFromClient = new BufferedReader(new InputStreamReader(
+						connectionSocket.getInputStream()));
+				DataOutputStream outToClient = new DataOutputStream(
+						connectionSocket.getOutputStream());
 
-			clientSentence = inFromClient.readLine();
+				clientSentence = inFromClient.readLine();
 
-			capitalizedSentence = clientSentence.toUpperCase() + '\n';
+				capitalizedSentence = clientSentence.toUpperCase() + '\n';
 
-			outToClient.writeBytes(capitalizedSentence);
+				outToClient.writeBytes(capitalizedSentence);
+				if (clientSentence.equals("sair")) {
+					System.out.println("ServerDisconect");
+					break;
+				}
+			}
+			connectionSocket.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

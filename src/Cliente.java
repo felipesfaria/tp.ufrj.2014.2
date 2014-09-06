@@ -1,46 +1,68 @@
 import java.io.*;
 import java.net.*;
 
-class Cliente {
+class Cliente extends Thread {
 
 	public static void main(String argv[]) throws Exception {
 		String sentence = null;
-		String modifiedSentence;
-		Teclado teclado;
+		KeyboardListener keyboardListener;
+		ServerListener serverListener;
 
 		String server = Servidor.host;
-		System.out.println("COMEÃ‡O");
+		System.out.println("COMEÇO");
 
-		while (true) {
-			Socket clientSocket = new Socket(server, 6789);
-			BufferedReader inFromServer = new BufferedReader(
-					new InputStreamReader(clientSocket.getInputStream()));
+		Socket clientSocket = new Socket(server, 6789);
 
-			teclado = new Teclado(sentence, clientSocket);
-			teclado.run();
+		keyboardListener = new KeyboardListener(sentence, clientSocket);
+		serverListener = new ServerListener(clientSocket);
 
-			modifiedSentence = inFromServer.readLine();
-
-			System.out.println("FROM SERVER: " + modifiedSentence);
-
-/*			sentence = teclado.sentence;
-			clientSocket.close();
-			if (sentence.endsWith("sair")) {
-				System.out.println("FIM!");
-				teclado.join();
-				break;
-			}*/
-		}
+		keyboardListener.start();
+		System.out.println("after thread");
+		serverListener.start();
+		
+		
+		keyboardListener.join();
+		serverListener.join();
+		clientSocket.close();
+		System.out.println("Signout");
 	}
 }
 
-class Teclado extends Thread {
+class ServerListener extends Thread{
+	Socket clientSocket;
+	BufferedReader inFromServer; 
+	String mensagem;
+	
+	public ServerListener(Socket c){
+		clientSocket = c;
+	}
+	
+	public void run(){
+		System.out.println("serverListener is running");
+		try{
+			while(true){
+				inFromServer = new BufferedReader(
+						new InputStreamReader(clientSocket.getInputStream()));
+				mensagem = inFromServer.readLine();
+				System.out.println("FROM SERVER: " + mensagem);
+				if(mensagem.equals("SAIR"))
+					break;
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	}
+}
+
+class KeyboardListener extends Thread {
 	String sentence;
 	Socket clientSocket;
 	BufferedReader inFromUser;
 	DataOutputStream outToServer;
 
-	public Teclado(String s, Socket c) throws IOException {
+	public KeyboardListener(String s, Socket c) throws IOException {
 		sentence = s;
 		clientSocket = c;
 		inFromUser = new BufferedReader(new InputStreamReader(System.in));
@@ -48,6 +70,7 @@ class Teclado extends Thread {
 	}
 
 	public void run() {
+		System.out.println("keyboardListener is running");
 		try {
 			while (true) {
 				sentence = inFromUser.readLine();
