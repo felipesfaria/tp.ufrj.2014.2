@@ -45,8 +45,9 @@ class ServerListener extends Thread{
 						new InputStreamReader(clientSocket.getInputStream()));
 				mensagem = inFromServer.readLine();
 				System.out.println("FROM SERVER: " + mensagem);
-				if(mensagem.equals("SAIR"))
+				if(mensagem.equals("SAIR")){
 					break;
+				}
 			}
 			
 		} catch (IOException e) {
