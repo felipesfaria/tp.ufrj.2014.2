@@ -1,5 +1,4 @@
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.*;
 import java.util.ArrayList;
 
@@ -64,7 +63,7 @@ class Comunicacao extends Thread {
 				inMessage = inFromClient.readLine();
 				System.out.println("Recebeu mensagem: \"" + inMessage
 						+ "\"- de:" + id);
-				
+
 				if (inMessage.equals("getUsers")) {
 					outMessage = "";
 					for (int i = 0; i < comunicacoes.size(); i++) {
@@ -75,20 +74,28 @@ class Comunicacao extends Thread {
 							outMessage += "inativo\n";
 						}
 					}
-					
-				} else if (inMessage.equals("sair")) {
+					outToClients.get(id).writeBytes(outMessage);
+
+				} else if (inMessage.equals("sair")) {// logOut
 					outMessage = "SAIR";
 					outToClients.get(id).writeBytes(outMessage);
 					System.out.println("ClientDisconect");
 					break;
-					
-				} else {
-					outMessage = inMessage.toUpperCase() + '\n';
-				}
 
-				for (int i = 0; i < outToClients.size(); i++) {
-					if (comunicacoes.get(i).ativo)
-						outToClients.get(i).writeBytes(outMessage);
+				} else if (inMessage.startsWith("@")) {// Private Message
+					System.out.println("enviar PM para "
+							+ inMessage.substring(1, 2));
+					Integer destination = Integer.valueOf(inMessage.substring(
+							1, 2));
+					outMessage = "Private from:" + id + ":" + inMessage.substring(2) + "\n";
+					outToClients.get(destination).writeBytes(outMessage);
+
+				} else {// Chat Message
+					outMessage = id + ":" + inMessage + '\n';
+					for (int i = 0; i < outToClients.size(); i++) {
+						if (comunicacoes.get(i).ativo)
+							outToClients.get(i).writeBytes(outMessage);
+					}
 				}
 
 			}
