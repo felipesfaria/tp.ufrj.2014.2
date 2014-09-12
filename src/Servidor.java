@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
 class Servidor {
 
@@ -13,7 +14,8 @@ class Servidor {
 		comunicacoes = new ArrayList<Comunicacao>();
 		Integer contador = 0;
 
-		host = InetAddress.getLocalHost().getHostName();
+		host = InetAddress.getLocalHost().getHostAddress();
+		System.out.println(host);
 
 		welcomeSocket = new ServerSocket(6789);
 		outToClients = new ArrayList<DataOutputStream>();
@@ -33,6 +35,8 @@ class Servidor {
 
 class Comunicacao extends Thread {
 	Integer id;
+	String nome;
+	String host;
 	Boolean ativo = false;
 	Socket connectionSocket;
 	String inMessage;
@@ -48,6 +52,7 @@ class Comunicacao extends Thread {
 		id = i;
 		outToClients = otc;
 		comunicacoes = coms;
+		nome=id.toString();
 	}
 
 	public void run() {
@@ -67,7 +72,7 @@ class Comunicacao extends Thread {
 				if (inMessage.equals("getUsers")) {
 					outMessage = "";
 					for (int i = 0; i < comunicacoes.size(); i++) {
-						outMessage += "Usuario:" + i + "esta :";
+						outMessage += "Usuario:" +i+"-"+comunicacoes.get(i).nome + " esta: ";
 						if (comunicacoes.get(i).ativo) {
 							outMessage += "ativo\n";
 						} else {
@@ -87,7 +92,23 @@ class Comunicacao extends Thread {
 							+ inMessage.substring(1, 2));
 					Integer destination = Integer.valueOf(inMessage.substring(
 							1, 2));
-					outMessage = "Private from:" + id + ":" + inMessage.substring(2) + "\n";
+					if(comunicacoes.size()<destination){
+						outMessage = "Usuario:"+destination+" não existe\n";
+						outToClients.get(id).writeBytes(outMessage);
+					}else if(comunicacoes.get(destination).ativo){
+						outMessage = "Private from:" + id + ":" + inMessage.substring(2) + "\n";
+						outToClients.get(destination).writeBytes(outMessage);
+					}else{
+						outMessage = "Usuario:"+destination+" não esta ativo\n";
+						outToClients.get(id).writeBytes(outMessage);
+					}
+				} else  if (inMessage.startsWith("nome:")) {// troca o nome
+					nome = inMessage.replace("nome:","");
+					
+					System.out.println("usuario "+id+" mudou o nome para:"+nome);
+					
+					Integer destination = id;
+					outMessage = "Seu novo nome de usuario é: "+nome+"\n";
 					outToClients.get(destination).writeBytes(outMessage);
 
 				} else {// Chat Message

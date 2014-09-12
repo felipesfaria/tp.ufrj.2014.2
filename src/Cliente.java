@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
 class Cliente extends Thread {
 
@@ -8,8 +9,17 @@ class Cliente extends Thread {
 		KeyboardListener keyboardListener;
 		ServerListener serverListener;
 
-		String server = Servidor.host;
+		Scanner entrada = new Scanner (System.in);
+		System.out.println("Digite o ip do servidor ou 'Local' para conversar dentro da propria maquina");
+		String server = entrada.nextLine();
+		if(server.equals("Local"))server = "127.0.0.1";
 		System.out.println("COMEÇO");
+		System.out.println("Comandos:");
+		System.out.println("ajuda - imprime essa lista");
+		System.out.println("getUsers - recebe lista de usuarios");
+		System.out.println("@numero - envia mensagem particular");
+		System.out.println("nome: - troca o nome");
+		System.out.println("sair - sai do chat");
 
 		Socket clientSocket = new Socket(server, 6789);
 
@@ -17,7 +27,6 @@ class Cliente extends Thread {
 		serverListener = new ServerListener(clientSocket);
 
 		keyboardListener.start();
-		System.out.println("after thread");
 		serverListener.start();
 		
 		
@@ -38,7 +47,6 @@ class ServerListener extends Thread{
 	}
 	
 	public void run(){
-		System.out.println("serverListener is running");
 		try{
 			while(true){
 				inFromServer = new BufferedReader(
@@ -71,17 +79,24 @@ class KeyboardListener extends Thread {
 	}
 
 	public void run() {
-		System.out.println("keyboardListener is running");
 		try {
 			while (true) {
 				sentence = inFromUser.readLine();
-				outToServer.writeBytes(sentence + '\n');
-				if (sentence.endsWith("sair")) {
-					System.out.println("FIM!");
-					break;
+				if(sentence.equals("ajuda")){
+					System.out.println("Comandos:");
+					System.out.println("ajuda - imprime essa lista");
+					System.out.println("getUsers - recebe lista de usuarios");
+					System.out.println("@numero - envia mensagem particular");
+					System.out.println("nome: - troca o nome");
+					System.out.println("sair - sai do chat");
+				}else{
+					outToServer.writeBytes(sentence + '\n');
+					if (sentence.endsWith("sair")) {
+						System.out.println("FIM!");
+						break;
+					}
 				}
 			}
-
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
